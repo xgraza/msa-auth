@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'com.github.gmazzo.buildconfig' version "$build_config_version"
+}
+
+var gitHash = execute("git rev-parse --short HEAD", "error")
+var gitBranch = execute("git branch --show-current", "main")
+
+group = project.group
+version = project.version
+
+buildConfig {
+    buildConfigField(String,  "HASH", gitHash)
+    buildConfigField(String,  "BRANCH", gitBranch)
+    buildConfigField(String,  "VERSION", project.version)
+    buildConfigField(String,  "BUILD_TIME", "${new Date(System.currentTimeMillis()).format("MM/dd/yyyy HH:mm")}")
+    buildConfigField(String,  "NAME", project.name)
+
+    packageName project.group.toString()
+    useJavaOutput()
+    generateAtSync = true
+}
+
+sourceSets.main.java.srcDirs += "build/gen/buildconfig/src/main"
+
+configurations {
+    jarLib
+    implementation.extendsFrom(jarLib)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.apache.httpcomponents:httpclient:4.5.14"
+    implementation "com.google.code.gson:gson:2.14.0"
+}
+
+tasks.withType(Jar).configureEach {
+    if (BUILD_LOCAL) {
+        from {
+            configurations.jarLib
+                    .filter { !it.name.endsWithIgnoreCase(".sha256") }
+                    .collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn(generateBuildConfig)
+}
+
+static execute(command, defaultValue) {
+    try {
+        return command.execute().text.trim()
+    } catch (exception) {
+        exception.printStackTrace()
+        return defaultValue
+    }
+}
