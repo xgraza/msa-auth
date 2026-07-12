@@ -33,17 +33,14 @@ repositories {
 }
 
 dependencies {
-    implementation "org.apache.httpcomponents:httpclient:4.5.14"
-    implementation "com.google.code.gson:gson:2.14.0"
+    implementation "org.apache.httpcomponents:httpclient:$httpclient_version"
+    implementation "com.google.code.gson:gson:$gson_version"
 }
 
 tasks.withType(Jar).configureEach {
-    if (BUILD_LOCAL) {
-        from {
-            configurations.jarLib
-                    .filter { !it.name.endsWithIgnoreCase(".sha256") }
-                    .collect { it.isDirectory() ? it : zipTree(it) }
-        }
+    from {
+        configurations.jarLib
+                .collect { it.isDirectory() ? it : zipTree(it) }
     }
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
