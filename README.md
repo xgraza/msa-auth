@@ -58,6 +58,8 @@ final String oauthURL = MSAAuth.loginWithBrowser((oauthToken) ->
 });
 ```
 
+In the above example, you will give the user logging into an account the value of `oauthURL`
+
 ### Access token
 
 If you have an access token, you are able to log in with just that
